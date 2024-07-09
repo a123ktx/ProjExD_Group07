@@ -7,14 +7,7 @@ HEIGHT = 900
 
 START = 300
 
-WHITE = (255, 255, 255)
-BLACK = (  0,   0,   0)
-RED   = (255,   0,   0)
-GREEN = (  0, 255,   0)
-BLUE  = (  0,   0, 255)
-GOLD  = (255, 216,   0)
-SILVER= (192, 192, 192)
-COPPER= (192, 112,  48)
+BROWN= (192, 112,  48)
 
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
 floor_lst = [(300, 700, 30, 200),
@@ -107,7 +100,7 @@ class floor(pg.sprite.Sprite):
         """
         super().__init__()
         self.image = pg.Surface((length, wid))
-        pg.draw.line(self.image, COPPER, [0,0], [length,0], wid)
+        pg.draw.line(self.image, BROWN, [0,0], [length,0], wid)
         self.image.set_colorkey((0,0,0))
         self.rect = self.image.get_rect()
         self.rect.left = start
@@ -131,7 +124,6 @@ def main():
     floors = pg.sprite.Group()
     floors.add(floor(10000,wid=100, start=START*(-1))) # 最初の床
     for f in floor_lst:
-        print(f)
         floors.add(floor(f[0], f[1],f[2],f[3]))
     bird = Bird(3, (START, 400))
     tmr = 0
