@@ -13,7 +13,7 @@ def main():
     k3_rct = k3_img.get_rect()  #画像surfaceに対応する画像rectを取得する
     k3_rct.center = 300, 200
 
-    goal_img = pg.image.load("fig/goal.png")  # ゴール画像「goal.png」を読み込み，Surfaceを生成せよ．
+    goal_img = pg.image.load("fig/goal.png")  # ゴール画像「goal.png」を読み込み，aSurfaceを生成せよ．
     goal_img = pg.transform.scale(goal_img, (550, 550))  # 画像のサイズを変更してウィンドウ内に収める
     goal_rct = goal_img.get_rect()
     goal_rct.center = 600, 350  # ゴールの位置を設定
@@ -27,14 +27,6 @@ def main():
         for event in pg.event.get():
             if event.type == pg.quit: 
                 return
-    
-    # while True:
-    #     for event in event in pg.event.get():
-    #         if event.type == pg.QUIT:
-    #             return
-    #         if event.type == pg.KEYDOWN:
-    #             if event.key == pg.K_ESCAPE:
-    #                 return
 
         x = tmr%4800         #こうかとんが画面右に向かって進んでいるように見せるために，背景画像を右から左に動くように，背景画像の横座標を修正せよ．そして，1600フレーム後に背景画像が間延びしないように，工夫せよ．
         screen.blit(bg_img, [-x, 0])    #背景画像を表示せよ．
