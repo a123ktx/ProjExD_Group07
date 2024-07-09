@@ -2,8 +2,8 @@ import os
 import sys
 import pygame as pg
 
-WIDTH = 1600
-HEIGHT = 900
+WIDTH = 800
+HEIGHT = 600
 
 START = 300
 
