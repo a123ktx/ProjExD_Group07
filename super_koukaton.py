@@ -132,6 +132,58 @@ class floor(pg.sprite.Sprite):
         """
         self.rect.move_ip(bird.move_tup[0]*(-1), 0)
 
+class Game:
+    def __init__(self):
+        # Pygameの初期化
+        pg.init()
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))  # ウィンドウサイズの設定
+        pg.display.set_caption("Super Koukaton")
+        
+        # ゴール画像の読み込みとスケーリング
+        self.goal_img = pg.image.load("fig/goal.png")
+        self.goal_img = pg.transform.scale(self.goal_img, (550, 550))
+        self.goal_rect = self.goal_img.get_rect()
+        self.goal_rect.center = (WIDTH, HEIGHT/2+100)  # ゴールの位置をスクロール先に設定
+        
+        # フォントとテキストの設定
+        self.font = pg.font.Font(None, 74)
+        self.goal_text = self.font.render("Game Clearing!", True, (0, 255, 0))
+        self.text_rect = self.goal_text.get_rect()
+        self.text_rect.center = (WIDTH // 2, 100)
+        self.screen_text = self.font.render("Space Start", True, (0, 255, 0))
+        self.start_rect = self.screen_text.get_rect()
+        self.start_rect.center = (WIDTH // 2, 100)
+        
+        self.tmr = 0
+        self.scroll_y = 0  # スクロール位置を初期化
+
+        # こうかとんの設定
+        self.bird = Bird(3, (START, HEIGHT - 100))
+        self.all_sprites = pg.sprite.Group(self.bird)
+        self.jump = JUMP()
+        
+    def run(self, screen):
+        running = True
+        clock = pg.time.Clock()
+        while running:
+            key_lst = pg.key.get_pressed()
+            
+            for event in pg.event.get():
+                if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                    running = False
+            
+            # 画面の塗りつぶし
+            screen.fill((0, 0, 0))
+            screen.blit(self.screen_text, self.start_rect)
+            pg.display.update()
+
+
+            # 画像とテキストの描画（スクロール位置を考慮）
+    def game_update(self, screen, bird):
+        self.goal_rect.centerx -= bird.move_tup[0]
+        screen.blit(self.goal_img, self.goal_rect)
+            
+
 
 def main():
     pg.display.set_caption("スーパーこうかとん")
@@ -149,13 +201,8 @@ def main():
     scroll_speed = 5
     tmr = 0
     jump_group = JUMP()
-    goal_img = pg.image.load("fig/goal.png")  # ゴール画像「goal.png」を読み込み，aSurfaceを生成せよ．
-    goal_img = pg.transform.scale(goal_img, (550, 550))  # 画像のサイズを変更してウィンドウ内に収める
-    goal_rct = goal_img.get_rect()
-    goal_rct.center = 600, 350  # ゴールの位置を設定
-
-    font = pg.font.Font(None, 74)
-    goal_text = font.render("Game Clearing!", True, (0, 255, 0)) 
+    game = Game()
+    game.run(screen)
     
     tmr = 0
 
@@ -166,6 +213,7 @@ def main():
             if event.type == pg.quit: 
                 return
 
+    
         key_lst = pg.key.get_pressed()
         if key_lst[pg.K_RIGHT]:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
             scroll_x -= scroll_speed
@@ -186,16 +234,14 @@ def main():
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
-        screen.blit(goal_img, goal_rct)
+        game.game_update(screen, bird)
         pg.display.update()
         tmr += 1        
         clock.tick(60)     #. FPSを200に変更せよ．
         
-        if bird.rect.centerx >= goal_rct.centerx:
-            pg.time.wait(2000)
+        if bird.rect.centerx >= game.goal_rect.centerx:
             screen.fill((255, 255, 255))
-            clear_text = font.render("Game Clearing!", True, (0, 255, 0))
-            screen.blit(clear_text, (screen.get_width() // 2 - clear_text.get_width() // 2, screen.get_height() // 2 - clear_text.get_height() // 2))
+            screen.blit(game.goal_text, (screen.get_width() // 2 - game.goal_text.get_width() // 2, screen.get_height() // 2 - game.goal_text.get_height() // 2))
             pg.display.update()
             pg.time.wait(2000)
             return
