@@ -2,17 +2,19 @@ import os
 import sys
 import pygame as pg
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 1600
+HEIGHT = 900
 
-START = 300
+START = (100, 100)
 
 BROWN= (192, 112,  48)
 
+BG_IMAGE = "fig/pg_bg.jpg"
+
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
-floor_lst = [(300, 700, 30, 200),
-             (300, 700, 30, 700),
-             (300, 550, 30, 450)]
+floor_lst = [(300, HEIGHT-200, 30, 200),
+             (300, HEIGHT-200, 30, 700),
+             (300, HEIGHT-350, 30, 450)]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -34,59 +36,72 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.5)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
-        self.imgs = {
-            (+1, 0): img,  # 右
-            (+1, -1): img,  # 右上
-            (0, -1): img,  # 上
-            (-1, -1): img0,  # 左上
-            (-1, 0): img0,  # 左
-            (-1, +1): img0,  # 左下
-            (0, +1): img,  # 下
-            (+1, +1): img,  # 右下
-        }
-
+        self.imgs = {(+1, 0): img0,
+                     (-1, 0): img} # 右 左
         self.dire = (+1, 0)
         self.image = self.imgs[self.dire]
         self.rect = self.image.get_rect()
         self.rect.center = xy
-        self.speed = 10
-        self.move_tup = () # こうかとんの移動距離を保存するタプル
+        self.speed_x = 10
+        self.speed_y = 0
+        self.move_x = 0 # こうかとんの移動距離を保存するタプル
+        self.where = None # どの床に乗っているか確認する
+        self.flip = 1 # 空中で向いている方向を確認する
 
-    def change_img(self, num: int, screen: pg.Surface):
+    def change_img(self, num: int, flip: int):
         """
         こうかとん画像を切り替え，画面に転送する
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
-        screen.blit(self.image, self.rect)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"),0, 2.0)
+        self.flip = flip
+        if  flip > 0:
+            self.image = pg.transform.flip(self.image, True, False)
+            self.flip = flip
 
-    def update(self, key_lst: list[bool], screen: pg.Surface, floors):
+    def update(self, key_lst: list[bool], screen: pg.Surface, floors, jump):
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        for k, mv in __class__.delta.items():
+        for k, mv in __class__.delta.items(): # キーリストを方向にしてsum_mvに格納
             if key_lst[k]:
                 sum_mv[0] += mv[0]
-                sum_mv[1] += mv[1]
         # 床に接地していた場合、下に落ちないようにする
         for flo in pg.sprite.spritecollide(self, floors, False):
-            if flo.rect.top+self.speed >= self.rect.bottom >= flo.rect.top-self.speed and sum_mv[1] > 0:
-                sum_mv[1] = 0
-        self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
-        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            if flo.rect.top+jump.max_sp >= self.rect.bottom > flo.rect.top-jump.max_sp and self.speed_y > 0:
+                self.rect.bottom = flo.rect.top
+                self.where = flo
+        self.speed_y = Jump.update(jump, self, key_lst, self.speed_y)
+        if self.rect.centerx >= WIDTH/2 and sum_mv[0] >= 0: # 画面中央で右に移動したら背景と地形が動くように
+            self.rect.move_ip(0, self.speed_y)
+            self.move_x = sum_mv[0]*self.speed_x
+        elif self.rect.left <= 50 and sum_mv[0] <= 0: # 画面左で左に移動したら背景と地形が移動
+            self.rect.move_ip(0, self.speed_y)
+            self.move_x = sum_mv[0]*self.speed_x
+        else:
+            self.rect.move_ip(self.speed_x*sum_mv[0], self.speed_y)
+            self.move_x = 0
+        if not self.where:
+            if sum_mv[0] != 0:
+                __class__.change_img(self, 3, sum_mv[0])
+            else:
+                __class__.change_img(self, 3, self.flip)
+        elif not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
-        self.move_tup = (sum_mv[0]*self.speed, sum_mv[1]*self.speed)
+            self.flip = self.dire[0]
+        else:
+            self.image = self.imgs[(self.flip, 0)]   
         screen.blit(self.image, self.rect)
 
 # 床を実装　金井
-class floor(pg.sprite.Sprite):
+class Floor(pg.sprite.Sprite):
     """
     床に関するクラス
     """
@@ -111,41 +126,121 @@ class floor(pg.sprite.Sprite):
         こうかとんの移動に合わせて床を移動させる関数
         引数1 bird:こうかとんの情報
         """
-        self.rect.move_ip(bird.move_tup[0]*(-1), 0)
+        self.rect.move_ip(bird.move_x*(-1), 0)
+
+
+class Jump():
+    """
+    ジャンプに関するクラス
+    """
+    def __init__(self):
+        """
+        ジャンプのイニシャライザ
+        ジャンプの初速、減速度、最高落下速度を管理する
+        """
+        self.sta_sp = -20 # ジャンプの初速
+        self.dec_sp = 1 # ジャンプの落下加速度
+        self.max_sp = 25 # 落下最高速度
+        self.doble = False # 二段ジャンプ
+    
+    def update(self,bird:Bird, key_lst, now_sp:int):
+        if bird.where:
+            # 乗っている床の外に出た場合、落ちるように
+            if bird.where.rect.left > bird.rect.right-20 or bird.where.rect.right < bird.rect.left+20:
+                bird.where = None
+                bird.rect.move_ip(0, self.max_sp)
+            # 床に乗っている場合、落下速度を0に
+            else:
+                now_sp = 0
+                # 床に接地していた場合、スペースを押すとジャンプできるように
+                if key_lst[pg.K_SPACE] and bird.where:
+                    now_sp = self.sta_sp
+                    bird.where = None
+                    self.doble = True
+        # 二段ジャンプ可能ならばさらに飛ぶ
+        elif key_lst[pg.K_w] and self.doble:
+            now_sp = self.sta_sp
+            self.doble = False
+        # 床に接地していなければ落ちるように
+        elif not bird.where and now_sp < self.max_sp:
+            now_sp += self.dec_sp 
+        return now_sp
+
+
+class Scroll(pg.sprite.Sprite):
+    """
+    背景スクロールに関するクラス
+    """
+    sc_num = 0
+    def __init__(self):
+        """
+        スクロールのイニシャライザ
+        横幅1600、縦900の画像を読み込む
+        """
+        super().__init__()
+        self.img = pg.image.load(BG_IMAGE)
+        if __class__.sc_num % 2 == 1:
+            self.img = pg.transform.flip(self.img, True, False)
+        self.x = -1600 + 1600*__class__.sc_num
+        __class__.sc_num += 1
+
+    def update(self, bird:Bird, screen):
+        """
+        画面を移動、更新する関数
+        左右に流れた背景を逆側に持ってくる処理を行っている
+        引数1 bird:移動するこうかとん
+        引数2 screen:画面
+        """
+        self.x -= bird.move_x
+        if self.x < -3200:
+            self.x = 3200
+            
+        elif self.x > 4800:
+            self.x = -1600
+        screen.blit(self.img, [self.x, 0])
+
+
+class Goal(pg.sprite.Sprite):
+    """
+    ゴールに関するクラス
+    """
+    def __init__(self):
+        """
+        ゴールのSurfaceを作成する
+        """
+        super().__init__()
+        
 
 
 def main():
     pg.display.set_caption("スーパーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock  = pg.time.Clock()
-    bg_img = pg.image.load("fig/pg_bg.jpg")     #背景画像「pg_bg.jpg」（画像サイズ：幅1600 高さ900）を読み込み，Surfaceを生成せよ．
-    bg_flip = pg.transform.flip(bg_img, True, False)
+    # ここから背景を設定する
+    bgs = pg.sprite.Group()
+    for i in range(4):
+        bgs.add(Scroll())
     # ここから床を敷く
     floors = pg.sprite.Group()
-    floors.add(floor(10000,wid=100, start=START*(-1))) # 最初の床
+    floors.add(Floor(100000,wid=100, start=-10000)) # 最初の床
     for f in floor_lst:
-        floors.add(floor(f[0], f[1],f[2],f[3]))
-    bird = Bird(3, (START, 400))
+        floors.add(Floor(f[0], f[1], f[2], f[3]))
+    bird = Bird(2, START)
+    jump = Jump() # ジャンプのイニシャライザを作成
     tmr = 0
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: return
-
-        x = tmr%4800         #こうかとんが画面右に向かって進んでいるように見せるために，背景画像を右から左に動くように，背景画像の横座標を修正せよ．そして，1600フレーム後に背景画像が間延びしないように，工夫せよ．
-        screen.blit(bg_img, [-x, 0])    #背景画像を表示せよ．
-        screen.blit(bg_flip, [-x+1600, 0])
-        screen.blit(bg_img, [-x+3200, 0])    #7
-        screen.blit(bg_flip, [-x+4800, 0])
+        bgs.update(bird, screen)
         key_lst = pg.key.get_pressed()
-        if len(pg.sprite.spritecollide(bird, floors, False)) != 0:
-            bird.on_floor = True
-        bird.update(key_lst, screen, floors) # 床のグループを追加で渡す
+        bird.update(key_lst, screen, floors, jump) # 床、ジャンプのグループを追加で渡す
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
+        # 背景のアップデート
         pg.display.update()
         tmr += 1        
-        clock.tick(60)     #. FPSを200に変更せよ．
+        clock.tick(60)
 
 
 if __name__ == "__main__":
