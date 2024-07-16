@@ -61,6 +61,7 @@ class Bird(pg.sprite.Sprite):
             self.image = pg.transform.flip(self.image, True, False)
             self.flip = flip
 
+
     def update(self, key_lst: list[bool], screen: pg.Surface, floors, jump):
         """
         押下キーに応じてこうかとんを移動させる
@@ -72,6 +73,7 @@ class Bird(pg.sprite.Sprite):
             if key_lst[k]:
                 sum_mv[0] += mv[0]
         # 床に接地していた場合、下に落ちないようにする
+
         __class__.check_on_floor(self, sum_mv[0], key_lst, floors, jump)
         screen.blit(self.image, self.rect)
 
@@ -159,7 +161,7 @@ class floor(pg.sprite.Sprite):
         こうかとんの移動に合わせて床を移動させる関数
         引数1 bird:こうかとんの情報
         """
-        self.rect.move_ip(bird.move_x, 0)
+        self.rect.move_ip(-bird.move_x, 0)
 
 
 def main():
@@ -193,10 +195,12 @@ def main():
         for event in pg.event.get():
             if event.type == pg.quit: 
                 return
-        if key_lst[pg.K_RIGHT]:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
+
+        key_lst = pg.key.get_pressed()
+        if key_lst[pg.K_RIGHT] and bird.rect.centerx > WIDTH //2:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
             scroll_x -= scroll_speed
-        if key_lst[pg.K_LEFT]:
-            scroll_x += scroll_speed
+        if key_lst[pg.K_LEFT] and bird.rect.centerx > START:
+            scroll_x += scroll_speed                
 
         scroll_x = scroll_x % 4800
         screen.fill((0,0,0))
