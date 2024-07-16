@@ -16,6 +16,17 @@ floor_lst = [(300, 700, 30, 200),
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+class JUMP(pg.sprite.Group):
+    """
+    こうかとんがジャンプに関するクラス
+    """
+    def __init__(self):
+        self.up = -20  # こうかとんのジャンプ力
+        self.down = 1  # こうかとんの重力
+        self.speed = 0  # y方向の速度
+        self.on = True  # こうかとんが地面にいるか判定
+
+
 class Bird(pg.sprite.Sprite):
     """
     ゲームキャラクター（こうかとん）に関するクラス
@@ -63,7 +74,7 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
 
-    def update(self, key_lst: list[bool], screen: pg.Surface, floors):
+    def update(self, key_lst: list[bool], screen: pg.Surface, floors, jump):
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
@@ -75,10 +86,18 @@ class Bird(pg.sprite.Sprite):
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
         # 床に接地していた場合、下に落ちないようにする
+        if key_lst[pg.K_SPACE] and jump.on == True:
+            jump.speed = jump.up
+            jump.on = False
         for flo in pg.sprite.spritecollide(self, floors, False):
             if flo.rect.top+self.speed >= self.rect.bottom >= flo.rect.top-self.speed and sum_mv[1] > 0:
                 sum_mv[1] = 0
-        self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
+        self.rect.move_ip(self.speed*sum_mv[0], jump.speed)
+        if jump.on == False:
+            jump.speed += jump.down
+            if self.rect.bottom > 600:
+                jump.speed = 0
+                jump.on = True
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
@@ -129,7 +148,7 @@ def main():
     scroll_x = 0  # スクロール機能
     scroll_speed = 5
     tmr = 0
-
+    jump_group = JUMP()
     goal_img = pg.image.load("fig/goal.png")  # ゴール画像「goal.png」を読み込み，aSurfaceを生成せよ．
     goal_img = pg.transform.scale(goal_img, (550, 550))  # 画像のサイズを変更してウィンドウ内に収める
     goal_rct = goal_img.get_rect()
@@ -141,6 +160,8 @@ def main():
     tmr = 0
 
     while True:
+        key_lst = pg.key.get_pressed()
+        
         for event in pg.event.get():
             if event.type == pg.quit: 
                 return
@@ -161,7 +182,7 @@ def main():
 
         if len(pg.sprite.spritecollide(bird, floors, False)) != 0:
             bird.on_floor = True
-        bird.update(key_lst, screen, floors) # 床のグループを追加で渡す
+        bird.update(key_lst, screen, floors, jump_group) # 床のグループを追加で渡す
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
