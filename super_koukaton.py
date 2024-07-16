@@ -10,9 +10,18 @@ START = 300
 BROWN= (192, 112,  48)
 
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
-floor_lst = [(300, 700, 30, 200),
+floor_lst = [(100, 300, 30, 200),
+             (100, 250, 30, 100),
              (300, 700, 30, 700),
-             (300, 550, 30, 450)]
+             (50, 250, 30, 330),
+             (150, 200, 30, 450),
+             (70, 270, 30, 650),
+             (80, 320, 30, 760,),
+             (60, 150, 120, 780),
+             (60, 150, 120, 880),
+            #  (60, 150, 120, 830),
+             (80, 250, 30, 900),
+             (60, 190, 30, 1000)]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -156,6 +165,7 @@ def main():
 
     font = pg.font.Font(None, 74)
     goal_text = font.render("Game Clearing!", True, (0, 255, 0)) 
+    gameover_text = font.render("Game Over ^^", True, (255, 0, 0))
     
     tmr = 0
 
@@ -187,6 +197,18 @@ def main():
         floors.update(bird)
         floors.draw(screen)
         screen.blit(goal_img, goal_rct)
+
+        # ゲームオーバー画面の表示
+        if bird.rect.bottom >= HEIGHT:
+            pg.time.wait(500)
+            screen.fill((0, 0, 0))
+            text_posi = (screen.get_width() // 2 - gameover_text.get_width() // 2,
+                         screen.get_height() // 2 - gameover_text.get_height() // 2)
+            screen.blit(gameover_text, (text_posi))
+            pg.display.update()
+            pg.time.wait(2000)
+            return
+        
         pg.display.update()
         tmr += 1        
         clock.tick(60)     #. FPSを200に変更せよ．
