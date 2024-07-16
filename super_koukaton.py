@@ -118,7 +118,7 @@ def main():
     pg.display.set_caption("スーパーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock  = pg.time.Clock()
-    bg_img = pg.image.load("fig/pg_bg.jpg")     #背景画像「pg_bg.jpg」（画像サイズ：幅1600 高さ900）を読み込み，Surfaceを生成せよ．
+    bg_img = pg.image.load("fig/pg_bg.jpg")   
     bg_flip = pg.transform.flip(bg_img, True, False)
     # ここから床を敷く
     floors = pg.sprite.Group()
@@ -126,17 +126,27 @@ def main():
     for f in floor_lst:
         floors.add(floor(f[0], f[1],f[2],f[3]))
     bird = Bird(3, (START, 400))
+    scroll_x = 0  # スクロール機能
+    scroll_speed = 5
     tmr = 0
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: return
 
-        x = tmr%4800         #こうかとんが画面右に向かって進んでいるように見せるために，背景画像を右から左に動くように，背景画像の横座標を修正せよ．そして，1600フレーム後に背景画像が間延びしないように，工夫せよ．
-        screen.blit(bg_img, [-x, 0])    #背景画像を表示せよ．
-        screen.blit(bg_flip, [-x+1600, 0])
-        screen.blit(bg_img, [-x+3200, 0])    #7
-        screen.blit(bg_flip, [-x+4800, 0])
         key_lst = pg.key.get_pressed()
+        if key_lst[pg.K_RIGHT]:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
+            scroll_x -= scroll_speed
+        if key_lst[pg.K_LEFT]:
+            scroll_x += scroll_speed
+
+        scroll_x = scroll_x % 4800
+        screen.fill((0,0,0))
+        screen.blit(bg_img, (scroll_x, 0))   
+        screen.blit(bg_flip, (scroll_x - 1600, 0))   
+        screen.blit(bg_img, (scroll_x - 3200, 0))   
+        screen.blit(bg_flip, (scroll_x - 4800, 0))   
+        screen.blit(bird.image, bird.rect) 
+
         if len(pg.sprite.spritecollide(bird, floors, False)) != 0:
             bird.on_floor = True
         bird.update(key_lst, screen, floors) # 床のグループを追加で渡す
