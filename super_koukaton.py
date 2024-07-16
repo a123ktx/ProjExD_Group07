@@ -10,9 +10,14 @@ START = 300
 BROWN= (192, 112,  48)
 
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
-floor_lst = [(300, 500, 30, 200),
-             (300, 500, 30, 700),
-             (300, 350, 30, 450)]
+floor_lst = [(400, 470, 30, 250),
+             (50, 300, 100, 680),
+             (250, 200, 50, 800),
+             (250, 400, 50, 800),
+             (50, 300, 100, 1250), 
+             (100, 150, 100, 1500),
+             (100, 450, 100, 1500),
+             (50, 300, 100, 1750)]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -217,7 +222,7 @@ def main():
     bg_flip = pg.transform.flip(bg_img, True, False)
     # ここから床を敷く
     floors = pg.sprite.Group()
-    floors.add(floor(10000,wid=50, start=START*(-1))) # 最初の床
+    # floors.add(floor(10000,wid=50, start=START*(-1))) # 最初の床
     for f in floor_lst:
         floors.add(floor(f[0], f[1],f[2],f[3]))
     bird = Bird(2, (START, 400))
@@ -225,6 +230,8 @@ def main():
     scroll_speed = 5
     tmr = 0
     jump = Jump()
+    font = pg.font.Font(None, 74)
+    gameover_text = font.render("Game Over ^^", True, (255, 0, 0))
     game = Game()
     game.run(screen)
     
@@ -257,6 +264,18 @@ def main():
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
+
+        # ゲームオーバー画面の表示
+        if bird.rect.bottom >= HEIGHT:
+            pg.time.wait(500)
+            screen.fill((0, 0, 0))
+            text_posi = (screen.get_width() // 2 - gameover_text.get_width() // 2,
+                         screen.get_height() // 2 - gameover_text.get_height() // 2)
+            screen.blit(gameover_text, (text_posi))
+            pg.display.update()
+            pg.time.wait(2000)
+            return
+        
         game.game_update(screen, bird)
         pg.display.update()
         tmr += 1        
