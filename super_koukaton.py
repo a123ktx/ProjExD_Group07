@@ -74,6 +74,7 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
 
+
     def update(self, key_lst: list[bool], screen: pg.Surface, floors, jump):
         """
         押下キーに応じてこうかとんを移動させる
@@ -93,6 +94,8 @@ class Bird(pg.sprite.Sprite):
             if flo.rect.top+self.speed >= self.rect.bottom >= flo.rect.top-self.speed and sum_mv[1] > 0:
                 sum_mv[1] = 0
         self.rect.move_ip(self.speed*sum_mv[0], jump.speed)
+        if self.rect.left < 0:
+            self.rect.left = 0
         if jump.on == False:
             jump.speed += jump.down
             if self.rect.bottom > 600:
@@ -167,10 +170,10 @@ def main():
                 return
 
         key_lst = pg.key.get_pressed()
-        if key_lst[pg.K_RIGHT]:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
+        if key_lst[pg.K_RIGHT] and bird.rect.centerx > WIDTH //2:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
             scroll_x -= scroll_speed
-        if key_lst[pg.K_LEFT]:
-            scroll_x += scroll_speed
+        if key_lst[pg.K_LEFT] and bird.rect.centerx > START:
+            scroll_x += scroll_speed                
 
         scroll_x = scroll_x % 4800
         screen.fill((0,0,0))
