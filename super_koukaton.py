@@ -129,9 +129,21 @@ def main():
     scroll_x = 0  # スクロール機能
     scroll_speed = 5
     tmr = 0
+
+    goal_img = pg.image.load("fig/goal.png")  # ゴール画像「goal.png」を読み込み，aSurfaceを生成せよ．
+    goal_img = pg.transform.scale(goal_img, (550, 550))  # 画像のサイズを変更してウィンドウ内に収める
+    goal_rct = goal_img.get_rect()
+    goal_rct.center = 600, 350  # ゴールの位置を設定
+
+    font = pg.font.Font(None, 74)
+    goal_text = font.render("Game Clearing!", True, (0, 255, 0)) 
+    
+    tmr = 0
+
     while True:
         for event in pg.event.get():
-            if event.type == pg.QUIT: return
+            if event.type == pg.quit: 
+                return
 
         key_lst = pg.key.get_pressed()
         if key_lst[pg.K_RIGHT]:  # 画面の中心をこうかとんにし、押下されたキーによって背景画像を移動させる。
@@ -153,9 +165,20 @@ def main():
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
+        screen.blit(goal_img, goal_rct)
         pg.display.update()
         tmr += 1        
         clock.tick(60)     #. FPSを200に変更せよ．
+        
+        if bird.rect.centerx >= goal_rct.centerx:
+            pg.time.wait(2000)
+            screen.fill((255, 255, 255))
+            clear_text = font.render("Game Clearing!", True, (0, 255, 0))
+            screen.blit(clear_text, (screen.get_width() // 2 - clear_text.get_width() // 2, screen.get_height() // 2 - clear_text.get_height() // 2))
+            pg.display.update()
+            pg.time.wait(2000)
+            return
+
 
 
 if __name__ == "__main__":
