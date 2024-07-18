@@ -2,8 +2,8 @@ import os
 import sys
 import pygame as pg
 
-WIDTH = 1600
-HEIGHT = 900
+WIDTH = 800
+HEIGHT = 600
 
 START = (100, 100)
 
@@ -12,11 +12,17 @@ BROWN= (192, 112,  48)
 BG_IMAGE = "fig/pg_bg.jpg"
 
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
-floor_lst = [(300, HEIGHT-200, 30, 200),
-             (300, HEIGHT-200, 30, 700),
-             (300, HEIGHT-350, 30, 450)]
+floor_lst = [(400, 470, 30, 250),
+             (50, 300, 100, 680),
+             (250, 200, 50, 800),
+             (250, 400, 50, 800),
+             (50, 300, 100, 1250), 
+             (100, 150, 100, 1500),
+             (100, 450, 100, 1500),
+             (50, 300, 100, 1750)]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 class Bird(pg.sprite.Sprite):
     """
@@ -62,6 +68,7 @@ class Bird(pg.sprite.Sprite):
             self.image = pg.transform.flip(self.image, True, False)
             self.flip = flip
 
+
     def update(self, key_lst: list[bool], screen: pg.Surface, floors, jump):
         """
         押下キーに応じてこうかとんを移動させる
@@ -73,32 +80,67 @@ class Bird(pg.sprite.Sprite):
             if key_lst[k]:
                 sum_mv[0] += mv[0]
         # 床に接地していた場合、下に落ちないようにする
+
+        __class__.check_on_floor(self, sum_mv[0], key_lst, floors, jump)
+        screen.blit(self.image, self.rect)
+
+    def check_on_floor(self, mv: int, key_lst: list[bool], floors, jump):
         for flo in pg.sprite.spritecollide(self, floors, False):
             if flo.rect.top+jump.max_sp >= self.rect.bottom > flo.rect.top-jump.max_sp and self.speed_y > 0:
                 self.rect.bottom = flo.rect.top
                 self.where = flo
         self.speed_y = Jump.update(jump, self, key_lst, self.speed_y)
-        if self.rect.centerx >= WIDTH/2 and sum_mv[0] >= 0: # 画面中央で右に移動したら背景と地形が動くように
+        if self.rect.centerx >= WIDTH/2 and mv >= 0: # 画面中央で右に移動したら地形が動くように
             self.rect.move_ip(0, self.speed_y)
-            self.move_x = sum_mv[0]*self.speed_x
-        elif self.rect.left <= 50 and sum_mv[0] <= 0: # 画面左で左に移動したら背景と地形が移動
+            self.move_x = mv*self.speed_x
+        elif self.rect.left <= 50 and mv <= 0: # 画面左で左に移動したら地形が移動
             self.rect.move_ip(0, self.speed_y)
-            self.move_x = sum_mv[0]*self.speed_x
+            self.move_x = mv*self.speed_x
         else:
-            self.rect.move_ip(self.speed_x*sum_mv[0], self.speed_y)
+            self.rect.move_ip(self.speed_x*mv, self.speed_y)
             self.move_x = 0
         if not self.where:
-            if sum_mv[0] != 0:
-                __class__.change_img(self, 3, sum_mv[0])
+            if mv != 0:
+                self.change_img(3, mv)
             else:
-                __class__.change_img(self, 3, self.flip)
-        elif not (sum_mv[0] == 0 and sum_mv[1] == 0):
-            self.dire = tuple(sum_mv)
+                self.change_img(3, self.flip)
+        elif mv != 0 :
+            self.dire = (mv, 0)
             self.image = self.imgs[self.dire]
             self.flip = self.dire[0]
         else:
             self.image = self.imgs[(self.flip, 0)]   
-        screen.blit(self.image, self.rect)
+
+class Jump():
+    """
+    ジャンプに関するクラス
+    """
+    def __init__(self):
+        """
+        ジャンプのイニシャライザ
+        ジャンプの初速、減速度、最高落下速度を管理する
+        """
+        self.up = -20  # こうかとんのジャンプ力
+        self.down = 1  # こうかとんの重力
+        self.max_sp = 25 # 落下最高速度
+    
+    def update(self,bird:Bird, key_lst, now_sp:int):
+        if bird.where:
+            # 乗っている床の外に出た場合、落ちるように
+            if bird.where.rect.left > bird.rect.right-20 or bird.where.rect.right < bird.rect.left+20:
+                bird.where = None
+                bird.rect.move_ip(0, self.max_sp)
+            # 床に乗っている場合、落下速度を0に
+            else:
+                now_sp = 0
+                # 床に接地していた場合、スペースを押すとジャンプできるように
+                if key_lst[pg.K_SPACE] and bird.where:
+                    now_sp = self.up
+                    bird.where = None
+        # 床に接地していなければ落ちるように
+        elif not bird.where and now_sp < self.max_sp:
+            now_sp += self.down
+        return now_sp
 
 # 床を実装　金井
 class Floor(pg.sprite.Sprite):
@@ -127,44 +169,6 @@ class Floor(pg.sprite.Sprite):
         引数1 bird:こうかとんの情報
         """
         self.rect.move_ip(bird.move_x*(-1), 0)
-
-
-class Jump():
-    """
-    ジャンプに関するクラス
-    """
-    def __init__(self):
-        """
-        ジャンプのイニシャライザ
-        ジャンプの初速、減速度、最高落下速度を管理する
-        """
-        self.sta_sp = -20 # ジャンプの初速
-        self.dec_sp = 1 # ジャンプの落下加速度
-        self.max_sp = 25 # 落下最高速度
-        self.doble = False # 二段ジャンプ
-    
-    def update(self,bird:Bird, key_lst, now_sp:int):
-        if bird.where:
-            # 乗っている床の外に出た場合、落ちるように
-            if bird.where.rect.left > bird.rect.right-20 or bird.where.rect.right < bird.rect.left+20:
-                bird.where = None
-                bird.rect.move_ip(0, self.max_sp)
-            # 床に乗っている場合、落下速度を0に
-            else:
-                now_sp = 0
-                # 床に接地していた場合、スペースを押すとジャンプできるように
-                if key_lst[pg.K_SPACE] and bird.where:
-                    now_sp = self.sta_sp
-                    bird.where = None
-                    self.doble = True
-        # 二段ジャンプ可能ならばさらに飛ぶ
-        elif key_lst[pg.K_w] and self.doble:
-            now_sp = self.sta_sp
-            self.doble = False
-        # 床に接地していなければ落ちるように
-        elif not bird.where and now_sp < self.max_sp:
-            now_sp += self.dec_sp 
-        return now_sp
 
 
 class Scroll(pg.sprite.Sprite):
