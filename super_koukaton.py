@@ -179,7 +179,7 @@ class Game:
         self.goal_img = pg.image.load("fig/goal.png")
         self.goal_img = pg.transform.scale(self.goal_img, (550, 550))
         self.goal_rect = self.goal_img.get_rect()
-        self.goal_rect.center = (WIDTH, HEIGHT/2+100)  # ゴールの位置をスクロール先に設定
+        self.goal_rect.center = (WIDTH*3, HEIGHT/2+100)  # ゴールの位置をスクロール先に設定
         
         # フォントとテキストの設定
         self.font = pg.font.Font(None, 74)
