@@ -7,9 +7,15 @@ HEIGHT = 600
 
 START = (100, 100)
 
+GREEN = (0, 255, 0)
 BROWN= (192, 112,  48)
+WHITE = (255, 255, 255)
 
-BG_IMAGE = "fig/pg_bg.jpg"
+BAG_IMAGE = "fig/pg_bg.jpg"
+GOAL_IMAGE = "fig/goal.png"
+GOAL_X = WIDTH*2
+
+FPS = 60
 
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
 floor_lst = [(400, 470, 30, 250),
@@ -68,7 +74,6 @@ class Bird(pg.sprite.Sprite):
             self.image = pg.transform.flip(self.image, True, False)
             self.flip = flip
 
-
     def update(self, key_lst: list[bool], screen: pg.Surface, floors, jump):
         """
         押下キーに応じてこうかとんを移動させる
@@ -81,7 +86,7 @@ class Bird(pg.sprite.Sprite):
                 sum_mv[0] += mv[0]
         # 床に接地していた場合、下に落ちないようにする
 
-        __class__.check_on_floor(self, sum_mv[0], key_lst, floors, jump)
+        self.check_on_floor(sum_mv[0], key_lst, floors, jump)
         screen.blit(self.image, self.rect)
 
     def check_on_floor(self, mv: int, key_lst: list[bool], floors, jump):
@@ -110,6 +115,7 @@ class Bird(pg.sprite.Sprite):
             self.flip = self.dire[0]
         else:
             self.image = self.imgs[(self.flip, 0)]   
+
 
 class Jump():
     """
@@ -142,7 +148,7 @@ class Jump():
             now_sp += self.down
         return now_sp
 
-# 床を実装　金井
+
 class Floor(pg.sprite.Sprite):
     """
     床に関するクラス
@@ -182,7 +188,7 @@ class Scroll(pg.sprite.Sprite):
         横幅1600、縦900の画像を読み込む
         """
         super().__init__()
-        self.img = pg.image.load(BG_IMAGE)
+        self.img = pg.image.load(BAG_IMAGE)
         if __class__.sc_num % 2 == 1:
             self.img = pg.transform.flip(self.img, True, False)
         self.x = -1600 + 1600*__class__.sc_num
@@ -213,7 +219,54 @@ class Goal(pg.sprite.Sprite):
         ゴールのSurfaceを作成する
         """
         super().__init__()
-        
+        # ゴール画像を読み込む
+        self.image = pg.image.load(GOAL_IMAGE)
+        height = self.image.get_height()
+        self.image = pg.transform.rotozoom(self.image, 0, (HEIGHT/height))
+        self.rect = self.image.get_rect()
+        self.rect.centerx = GOAL_X
+        self.rect.y = HEIGHT*0.1
+        # ゴール用のテキストを決定する
+        self.font = pg.font.Font(None, 74)
+        self.text = self.font.render("Game Clearing!", True, GREEN)
+        self.text_width = self.text.get_width()
+        self.text_height = self.text.get_height()
+
+    def update(self, bird:Bird, screen: pg.Surface):
+        """
+        ゴールを動かす関数
+        引数1 bird:こうかとん
+        引数2 screen:画面のSurface
+        """
+        if self.rect.centerx > bird.rect.centerx:
+            self.rect.move_ip(bird.move_x*(-1), 0)
+        elif self.rect.centerx <= bird.rect.centerx and bird.move_x >= 0:
+            bird.move_x = 0
+        screen.blit(self.image, self.rect)
+
+    def check_goal(self, bird:Bird, screen:pg.Surface, clock: pg.time):
+        """
+        こうかとんがゴールに触れたら、ゲームクリアの処理をする
+        引数1 bird:こうかとん
+        引数2 screen:画面のSurface
+        引数3 clock:ゲームのtime関数 
+        """
+        if bird.rect.centerx >= self.rect.centerx:
+            if bird.rect.colliderect(self.rect):
+                tmr = 0
+                while tmr < FPS*4:
+                    for event in pg.event.get():
+                        if event.type == pg.QUIT:
+                            pg.quit()
+                            sys.exit()
+                    screen.fill(WHITE)
+                    screen.blit(self.text, (WIDTH/2-self.text_width/2, 
+                                            HEIGHT/3-self.text_height/2))
+                    pg.display.update()
+                    tmr += 1
+                    clock.tick(FPS)
+                pg.quit()
+                sys.exit()
 
 
 def main():
@@ -231,24 +284,28 @@ def main():
         floors.add(Floor(f[0], f[1], f[2], f[3]))
     bird = Bird(2, START)
     jump = Jump() # ジャンプのイニシャライザを作成
+    goal = Goal()
     tmr = 0
     while True:
         for event in pg.event.get():
-            if event.type == pg.QUIT: return
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
         bgs.update(bird, screen)
         key_lst = pg.key.get_pressed()
-        bird.update(key_lst, screen, floors, jump) # 床、ジャンプのグループを追加で渡す
+        # こうかとんのアップデート、中で
+        bird.update(key_lst, screen, floors, jump)
+        # ゴールのアップデート
+        goal.update(bird, screen)
+        goal.check_goal(bird, screen, clock)
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
-        # 背景のアップデート
         pg.display.update()
         tmr += 1        
-        clock.tick(60)
+        clock.tick(FPS)
 
 
 if __name__ == "__main__":
     pg.init()
     main()
-    pg.quit()
-    sys.exit()
