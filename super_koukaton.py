@@ -5,7 +5,7 @@ import pygame as pg
 WIDTH = 800
 HEIGHT = 600
 
-START = (100, 100)
+START = (300, 300)
 
 GREEN = (0, 255, 0)
 BROWN= (192, 112,  48)
@@ -116,7 +116,7 @@ class Bird(pg.sprite.Sprite):
         else:
             self.image = self.imgs[(self.flip, 0)]   
 
-
+# 担当:村上
 class Jump():
     """
     ジャンプに関するクラス
@@ -148,7 +148,7 @@ class Jump():
             now_sp += self.down
         return now_sp
 
-
+# 担当:金井
 class Floor(pg.sprite.Sprite):
     """
     床に関するクラス
@@ -176,7 +176,7 @@ class Floor(pg.sprite.Sprite):
         """
         self.rect.move_ip(bird.move_x*(-1), 0)
 
-
+# 担当:渡邊
 class Scroll(pg.sprite.Sprite):
     """
     背景スクロールに関するクラス
@@ -209,7 +209,7 @@ class Scroll(pg.sprite.Sprite):
             self.x = -1600
         screen.blit(self.img, [self.x, 0])
 
-
+# 担当:矢本
 class Goal(pg.sprite.Sprite):
     """
     ゴールに関するクラス
@@ -279,7 +279,7 @@ def main():
         bgs.add(Scroll())
     # ここから床を敷く
     floors = pg.sprite.Group()
-    floors.add(Floor(100000,wid=100, start=-10000)) # 最初の床
+    # floors.add(Floor(100000,wid=100, start=-10000)) # 最初の床
     for f in floor_lst:
         floors.add(Floor(f[0], f[1], f[2], f[3]))
     bird = Bird(2, START)
