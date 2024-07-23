@@ -15,7 +15,7 @@ BLACK = (0, 0, 0)
 
 BAG_IMAGE = "fig/pg_bg.jpg"
 GOAL_IMAGE = "fig/goal.png"
-GOAL_X = WIDTH*2
+GOAL_X = WIDTH*5.6
 
 FPS = 60
 
