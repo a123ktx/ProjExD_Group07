@@ -7,9 +7,11 @@ HEIGHT = 600
 
 START = (300, 300)
 
+RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BROWN= (192, 112,  48)
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 BAG_IMAGE = "fig/pg_bg.jpg"
 GOAL_IMAGE = "fig/goal.png"
@@ -267,6 +269,31 @@ class Goal(pg.sprite.Sprite):
                     clock.tick(FPS)
                 pg.quit()
                 sys.exit()
+
+
+class Gameover(pg.sprite.Sprite):
+    """
+    ゲームオーバーに関するクラス
+    """
+    def __init__(self):
+        """
+        ゴールのSurfaceを作成する
+        """
+        super().__init__()
+        # 
+        # ゲームオーバー用のテキストを決定する
+        self.font = pg.font.Font(None, 74)
+        self.text = self.font.render("Game Over^^", True, RED)
+        self.text_width = self.text.get_width()
+        self.text_height = self.text.get_height()
+    
+    def check_fall(self, bird:Bird):
+        """
+        こうかとんが下に落ちたかチェックする
+        """
+        if bird.rect.bottom >= HEIGHT:
+
+
 
 
 def main():
