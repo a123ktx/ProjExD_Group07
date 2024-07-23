@@ -10,14 +10,29 @@ START = 300
 BROWN= (192, 112,  48)
 
 #床の情報を入れるリスト length:床の長さ, height:床のy座標, wid:床の厚さ, start:床の左端
-floor_lst = [(400, 470, 30, 250),
-             (50, 300, 100, 680),
-             (250, 200, 50, 800),
-             (250, 400, 50, 800),
-             (50, 300, 100, 1250), 
+floor_lst = [(400, 470, 50, 250),
+             (250, 300, 50, 800),
+             (100, 300, 100, 1250), 
              (100, 150, 100, 1500),
              (100, 450, 100, 1500),
-             (50, 300, 100, 1750)]
+             (100, 300, 100, 1750),
+             (50, 480, 100, 2020),
+             (50, 480, 200, 2070),
+             (50, 480, 300, 2120),
+             (50, 480, 400, 2170),
+             (50, 480, 500, 2220),
+             (50, 480, 600, 2270),
+             (50, 480, 600, 2470),
+             (50, 480, 500, 2520),
+             (50, 480, 400, 2570),
+             (50, 480, 300, 2620),
+             (50, 480, 200, 2670),
+             (50, 480, 100, 2720),
+             (300, 480, 50, 2970),
+             (100, 480, 300, 3400),
+             (100, 480, 500, 3650),
+             (100, 480, 100, 3900), 
+             (100, 480, 250, 4150)]
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -179,7 +194,7 @@ class Game:
         self.goal_img = pg.image.load("fig/goal.png")
         self.goal_img = pg.transform.scale(self.goal_img, (550, 550))
         self.goal_rect = self.goal_img.get_rect()
-        self.goal_rect.center = (WIDTH, HEIGHT/2+100)  # ゴールの位置をスクロール先に設定
+        self.goal_rect.center = (WIDTH*5.5, HEIGHT/2+100)  # ゴールの位置をスクロール先に設定
         
         # フォントとテキストの設定
         self.font = pg.font.Font(None, 74)
@@ -222,7 +237,7 @@ def main():
     bg_flip = pg.transform.flip(bg_img, True, False)
     # ここから床を敷く
     floors = pg.sprite.Group()
-    # floors.add(floor(10000,wid=50, start=START*(-1))) # 最初の床
+    #floors.add(floor(10000,wid=50, start=START*(-1))) # 最初の床
     for f in floor_lst:
         floors.add(floor(f[0], f[1],f[2],f[3]))
     bird = Bird(2, (START, 400))
