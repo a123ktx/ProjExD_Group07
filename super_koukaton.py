@@ -13,6 +13,12 @@ BROWN= (192, 112,  48)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+# こうかとんについて
+X_SP = 10 # 横の移動速度
+UP_SP = 20 # ジャンプの初速
+DOWN_SP = 1 # 落下速度
+MAX_DOWN_SP = 25 # 最高落下速度
+
 BAG_IMAGE = "fig/pg_bg.jpg"
 GOAL_IMAGE = "fig/goal.png"
 GOAL_X = WIDTH*5.6
@@ -73,9 +79,9 @@ class Bird(pg.sprite.Sprite):
         self.image = self.imgs[self.dire]
         self.rect = self.image.get_rect()
         self.rect.center = xy
-        self.speed_x = 10
+        self.speed_x = X_SP
         self.speed_y = 0
-        self.move_x = 0 # こうかとんの移動距離を保存するタプル
+        self.move_x = 0 # こうかとんの移動距離を保存する
         self.where = None # どの床に乗っているか確認する
         self.flip = 1 # 空中で向いている方向を確認する
 
@@ -143,9 +149,9 @@ class Jump():
         ジャンプのイニシャライザ
         ジャンプの初速、減速度、最高落下速度を管理する
         """
-        self.up = -20  # こうかとんのジャンプ力
-        self.down = 1  # こうかとんの重力
-        self.max_sp = 25 # 落下最高速度
+        self.up = UP_SP*(-1)  # こうかとんのジャンプ力
+        self.down = DOWN_SP  # こうかとんの重力
+        self.max_sp = MAX_DOWN_SP # 落下最高速度
     
     def update(self,bird:Bird, key_lst, now_sp:int):
         if bird.where:
