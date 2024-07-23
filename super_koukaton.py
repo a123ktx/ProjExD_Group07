@@ -270,30 +270,78 @@ class Goal(pg.sprite.Sprite):
                 pg.quit()
                 sys.exit()
 
-
+# 担当:村上
 class Gameover(pg.sprite.Sprite):
     """
     ゲームオーバーに関するクラス
     """
     def __init__(self):
         """
-        ゴールのSurfaceを作成する
+        ゲームオーバー用のテキストを決定する
         """
         super().__init__()
-        # 
         # ゲームオーバー用のテキストを決定する
         self.font = pg.font.Font(None, 74)
         self.text = self.font.render("Game Over^^", True, RED)
         self.text_width = self.text.get_width()
         self.text_height = self.text.get_height()
     
-    def check_fall(self, bird:Bird):
+    def check_fall(self, bird:Bird, screen:pg.Surface, clock:pg.time):
         """
         こうかとんが下に落ちたかチェックする
         """
         if bird.rect.bottom >= HEIGHT:
+            tmr = 0
+            while tmr < FPS*4:
+                for event in pg.event.get():
+                    if event.type == pg.QUIT:
+                        pg.quit()
+                        sys.exit()
+                screen.fill(BLACK)
+                screen.blit(self.text, (WIDTH/2-self.text_width/2, 
+                                        HEIGHT/3-self.text_height/2))
+                pg.display.update()
+                tmr += 1
+                clock.tick(FPS)
+            pg.quit()
+            sys.exit()
 
-
+# 担当:矢本
+class Start(pg.sprite.Sprite):
+    """
+    ゲームをスタートするクラス
+    """
+    def __init__(self):
+        """
+        ゲームを開始する準備をする
+        """
+        super().__init__()
+        # ゲームスタートの確認をする
+        self.on = False
+        # ゲームスタート用のテキストを決定する
+        self.font = pg.font.Font(None, 74)
+        self.text = self.font.render("Space Start", True, GREEN)
+        self.text_width = self.text.get_width()
+        self.text_height = self.text.get_height()
+    
+    def check_start(self, screen:pg.Surface, clock:pg.time):
+        """
+        スタートしたかチェックする
+        """
+        while not self.on:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+            key_lst = pg.key.get_pressed()
+            screen.fill(WHITE)
+            screen.blit(self.text, (WIDTH/2-self.text_width/2, 
+                                    HEIGHT/3-self.text_height/2))
+            pg.display.update()
+            if key_lst[pg.K_SPACE]:
+                self.on = True
+                return
+            clock.tick(FPS)
 
 
 def main():
@@ -312,6 +360,9 @@ def main():
     bird = Bird(2, START)
     jump = Jump() # ジャンプのイニシャライザを作成
     goal = Goal()
+    g_o = Gameover()
+    g_s = Start()
+    g_s.check_start(screen,clock)
     tmr = 0
     while True:
         for event in pg.event.get():
@@ -325,6 +376,8 @@ def main():
         # ゴールのアップデート
         goal.update(bird, screen)
         goal.check_goal(bird, screen, clock)
+        # ゲームオーバーの判定を行う
+        g_o.check_fall(bird, screen, clock)
         # 床のアップデート
         floors.update(bird)
         floors.draw(screen)
